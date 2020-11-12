@@ -210,6 +210,8 @@ public:
         std::string line;
 
         while (std::getline(infile, line)) {
+            CStringHelper::trimExtraSpace(line);
+
             auto tokens = CStringHelper::split(line, ' ');
 
             if (tokens.size() < 5)
@@ -230,8 +232,8 @@ public:
             processMap.dev = tokens[3];
             CStringHelper::toNumber(tokens[4], processMap.inode);
 
-            if (tokens.size() > 5)
-                processMap.file = tokens.back();
+            if (tokens.size() == 6)
+                processMap.file = tokens[5];
 
             processMaps.push_back(processMap);
         }

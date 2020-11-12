@@ -100,6 +100,17 @@ public:
         trim(s);
         return s;
     }
+
+    static void trimExtraSpace(std::string &s) {
+        s.erase(std::unique(std::begin(s), std::end(s), [](unsigned char a, unsigned char b) {
+            return std::isspace(a) && std::isspace(b);
+        }), std::end(s));
+    }
+
+    static std::string trimExtraSpaceCopy(std::string s) {
+        trimExtraSpace(s);
+        return s;
+    }
 };
 //******************************************************************************
 #endif

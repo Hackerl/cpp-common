@@ -4,7 +4,7 @@
 #include <ctime>
 #include <cstring>
 
-static inline char *timeNow();
+inline std::string timeNow();
 
 #define _FILE strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__
 
@@ -19,8 +19,8 @@ static inline char *timeNow();
 
 #define PRINT_FUNCTION(format, ...)      fprintf(stderr, format, __VA_ARGS__)
 
-#define LOG_FMT             "%s | %-7s | %-15s | %s:%d | "
-#define LOG_ARGS(LOG_TAG)   timeNow(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
+#define LOG_FMT             "%s | %-7s | %-15s | %10s:%-4d | "
+#define LOG_ARGS(LOG_TAG)   timeNow().c_str(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
 
 #define NEWLINE     "\n"
 
@@ -52,15 +52,14 @@ static inline char *timeNow();
 #define LOG_IF_ERROR(condition, message, args...)
 #endif
 
-static inline char *timeNow() {
-    static char buffer[64];
-
+inline std::string timeNow() {
     time_t rawTime = {};
 
     time(&rawTime);
     tm *timeInfo = localtime(&rawTime);
 
-    std::strftime(buffer, 64, "%Y-%m-%d %H:%M:%S", timeInfo);
+    char buffer[64] = {};
+    std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", timeInfo);
 
     return buffer;
 }

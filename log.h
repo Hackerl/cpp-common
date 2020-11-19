@@ -2,6 +2,7 @@
 #define __Log_H__
 //******************************************************************************
 #include <ctime>
+#include <string>
 #include <cstring>
 
 inline std::string timeNow();

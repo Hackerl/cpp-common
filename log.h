@@ -1,11 +1,8 @@
 #ifndef __Log_H__
 #define __Log_H__
 //******************************************************************************
-#include <ctime>
-#include <string>
 #include <cstring>
-
-inline std::string timeNow();
+#include "utils/time_helper.h"
 
 #define _FILE strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__
 
@@ -21,7 +18,7 @@ inline std::string timeNow();
 #define PRINT_FUNCTION(format, ...)      fprintf(stderr, format, __VA_ARGS__)
 
 #define LOG_FMT             "%s | %-7s | %-15s | %10s:%-4d | "
-#define LOG_ARGS(LOG_TAG)   timeNow().c_str(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
+#define LOG_ARGS(LOG_TAG)   CTimeHelper::getTimeString().c_str(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
 
 #define NEWLINE     "\n"
 
@@ -52,17 +49,5 @@ inline std::string timeNow();
 #else
 #define LOG_IF_ERROR(condition, message, args...)
 #endif
-
-inline std::string timeNow() {
-    time_t rawTime = {};
-
-    time(&rawTime);
-    tm *timeInfo = localtime(&rawTime);
-
-    char buffer[64] = {};
-    std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", timeInfo);
-
-    return buffer;
-}
 //******************************************************************************
 #endif

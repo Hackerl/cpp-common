@@ -139,19 +139,15 @@ public:
         if (line.empty())
             return false;
 
+        CStringHelper::trimExtraSpace(line);
         auto stats = CStringHelper::split(line, ' ');
 
-        // may contain ""
-        if (stats.size() < QueryCPUStatCount + 1)
+        if (stats.size() < QueryCPUStatCount)
             return false;
 
         auto index = 0;
 
         systemState.name = stats[index++];
-
-        // skip ""
-        if (stats[index].empty())
-            index++;
 
         CStringHelper::toNumber(stats[index++], systemState.user);
         CStringHelper::toNumber(stats[index++], systemState.nice);
@@ -239,7 +235,7 @@ public:
             if (tokens.size() < 5)
                 continue;
 
-            CProcessMap processMap;
+            CProcessMap processMap = {};
 
             auto vm = CStringHelper::split(tokens[0], '-');
 

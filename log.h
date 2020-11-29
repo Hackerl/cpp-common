@@ -17,8 +17,8 @@
 
 #define PRINT_FUNCTION(format, ...)      fprintf(stderr, format, __VA_ARGS__)
 
-#define LOG_FMT             "%s | %-7s | %-15s | %10s:%-4d | "
-#define LOG_ARGS(LOG_TAG)   CTimeHelper::getTimeString().c_str(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
+#define LOG_FMT             "%s | %-5s | %+20s:%-4d] "
+#define LOG_ARGS(LOG_TAG)   CTimeHelper::getTimeString().c_str(), LOG_TAG, _FILE, __LINE__
 
 #define NEWLINE     "\n"
 

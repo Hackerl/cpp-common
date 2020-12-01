@@ -8,6 +8,6 @@ public:
     virtual ~Interface() = default;
 };
 
-typedef CGUID InterfaceID;
+typedef GUID InterfaceID;
 //******************************************************************************
 #endif

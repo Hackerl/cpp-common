@@ -3,14 +3,14 @@
 //******************************************************************************
 #include <cstring>
 
-struct CGUID {
-    unsigned long  Data1;
-    unsigned short Data2;
-    unsigned short Data3;
-    unsigned char  Data4[8];
+struct GUID {
+    unsigned int  data1;
+    unsigned short data2;
+    unsigned short data3;
+    unsigned char  data4[8];
 
-    bool operator == (const CGUID& guid) const {
-        return (Data1 == guid.Data1 && Data2 == guid.Data2 && Data3 == guid.Data3 && !memcmp(Data4, guid.Data4, sizeof(Data4)));
+    bool operator == (const GUID& guid) const {
+        return (data1 == guid.data1 && data2 == guid.data2 && data3 == guid.data3 && !memcmp(data4, guid.data4, sizeof(data4)));
     }
 };
 //******************************************************************************

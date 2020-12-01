@@ -100,6 +100,15 @@ public:
 
         return Json::parseFromStream(Json::CharReaderBuilder(), in, &root, &error);
     }
+
+    static std::string writeString(Json::Value& jv) {
+        Json::StreamWriterBuilder builder;
+
+        builder["commentStyle"] = "None";
+        builder["indentation"] = "";
+
+        return Json::writeString(builder, jv);
+    }
 };
 //******************************************************************************
 #endif

@@ -18,11 +18,8 @@ public:
 
     GUID generateGUID() {
         GUID guid = {};
-
-        fill((char *)&guid.data1, sizeof(guid.data1));
-        fill((char *)&guid.data2, sizeof(guid.data2));
-        fill((char *)&guid.data3, sizeof(guid.data3));
-        fill((char *)&guid.data4, sizeof(guid.data4));
+        
+        fill((char *)&guid, sizeof(guid));
 
         return guid;
     }

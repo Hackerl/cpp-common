@@ -70,8 +70,10 @@ public:
         if (wordexp(command, &p, 0) != 0)
             return 0;
 
-        if (p.we_wordc == 0)
+        if (p.we_wordc == 0) {
+            wordfree(&p);
             return 0;
+        }
 
         pid_t child = fork();
 

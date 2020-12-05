@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 //******************************************************************************
 struct CFileState {
+    unsigned long size;
     unsigned long lastAccessTime;
     unsigned long lastModifyTime;
     unsigned long lastChangeTime;
@@ -19,6 +20,7 @@ public:
             return false;
 
         // fill state
+        fileState.size = info.st_size;
         fileState.lastAccessTime = info.st_atim.tv_sec;
         fileState.lastModifyTime = info.st_mtim.tv_sec;
         fileState.lastChangeTime = info.st_ctim.tv_sec;

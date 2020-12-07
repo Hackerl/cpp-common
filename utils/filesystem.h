@@ -19,11 +19,17 @@ public:
         if (stat(path, &info) != 0)
             return false;
 
-        // fill state
         fileState.size = info.st_size;
+
+# if defined(__LINUX__)
         fileState.lastAccessTime = info.st_atim.tv_sec;
         fileState.lastModifyTime = info.st_mtim.tv_sec;
         fileState.lastChangeTime = info.st_ctim.tv_sec;
+# elif defined(__APPLE__)
+        fileState.lastAccessTime = info.st_atimespec.tv_sec;
+        fileState.lastModifyTime = info.st_mtimespec.tv_sec;
+        fileState.lastChangeTime = info.st_ctimespec.tv_sec;
+#endif
 
         return true;
     }
@@ -46,7 +52,7 @@ public:
         return (info.st_mode & static_cast<unsigned int>(S_IFDIR)) != 0;
     }
 
-    static bool createDir(const char* path, __mode_t mode = 0755) {
+    static bool createDir(const char* path, mode_t mode = 0755) {
         return mkdir(path, mode) == 0;
     }
 };

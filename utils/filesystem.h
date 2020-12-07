@@ -21,14 +21,14 @@ public:
 
         fileState.size = info.st_size;
 
-# if defined(__LINUX__)
-        fileState.lastAccessTime = info.st_atim.tv_sec;
-        fileState.lastModifyTime = info.st_mtim.tv_sec;
-        fileState.lastChangeTime = info.st_ctim.tv_sec;
-# elif defined(__APPLE__)
+# if defined(__APPLE__)
         fileState.lastAccessTime = info.st_atimespec.tv_sec;
         fileState.lastModifyTime = info.st_mtimespec.tv_sec;
         fileState.lastChangeTime = info.st_ctimespec.tv_sec;
+#else
+        fileState.lastAccessTime = info.st_atim.tv_sec;
+        fileState.lastModifyTime = info.st_mtim.tv_sec;
+        fileState.lastChangeTime = info.st_ctim.tv_sec;
 #endif
 
         return true;

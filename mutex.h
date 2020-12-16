@@ -3,19 +3,7 @@
 //******************************************************************************
 #include <mutex>
 //******************************************************************************
-class Mutex {
-public:
-    void lock() {
-        mMutex.lock();
-    }
-
-    void unlock() {
-        mMutex.unlock();
-    }
-
-private:
-    std::mutex mMutex;
-};
+typedef std::mutex Mutex;
 //******************************************************************************
 template<typename T>
 class AutoMutex_ {

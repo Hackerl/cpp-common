@@ -10,16 +10,16 @@ struct Singleton {
 
         MutexLock.lock();
 
-        static T __instance__;
+        static T _instance_;
 
         MutexLock.unlock();
 
-        return &__instance__;
+        return &_instance_;
     }
 
     static T* InstanceNoLock() {
-        static T __instance__;
-        return &__instance__;
+        static T _instance_;
+        return &_instance_;
     }
 };
 

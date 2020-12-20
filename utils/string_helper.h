@@ -4,6 +4,7 @@
 #include <vector>
 #include <sstream>
 #include <algorithm>
+#include <numeric>
 //******************************************************************************
 class CStringHelper {
 public:
@@ -29,6 +30,21 @@ public:
         }
 
         return tokens;
+    }
+
+    template<class T>
+    static std::string join(const T& containers, const char* delimiter) {
+        if (containers.empty())
+            return "";
+
+        return std::accumulate(
+                std::next(containers.begin()),
+                containers.end(),
+                containers.front(),
+                [=](auto result, const auto &value) {
+                    return result + delimiter + value;
+                }
+        );
     }
 
     static bool startWith(std::string const &fullString, std::string const &ending) {

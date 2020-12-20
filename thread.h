@@ -10,54 +10,36 @@ public:
 
 public:
     CThread_() {
-        mThreadHandle = nullptr;
-        mThis = nullptr;
-        mRouter = nullptr;
+        mThread = nullptr;
     }
 
 public:
     bool start(T* t, PFN_WorkRoutine router) {
-        if (mThreadHandle) {
-            mThreadHandle->join();
-            delete mThreadHandle;
-            mThreadHandle = nullptr;
+        if (isRunning()) {
+            stop();
         }
 
-        mThis = t;
-        mRouter = router;
+        mThread = new std::thread(router, t);
 
-        mThreadHandle = new std::thread(staticThreadRouter, (void *) this);
-
-        return mThreadHandle != nullptr;
+        return mThread != nullptr;
     }
 
     bool isRunning() {
-        return mThreadHandle != nullptr;
+        return mThread != nullptr;
     }
 
-    void stop(bool ForceTerminate = false) {
-        if (mThreadHandle) {
-            if (!ForceTerminate && mThreadHandle->joinable())
-                mThreadHandle->join();
+    void stop(bool force = false) {
+        if (mThread) {
+            if (!force && mThread->joinable())
+                mThread->join();
 
-            delete mThreadHandle;
-            mThreadHandle = nullptr;
+            delete mThread;
+            mThread = nullptr;
         }
     }
 
 private:
-    static void staticThreadRouter(void * t) {
-        ((CThread_<T> *) t)->threadRouter();
-    }
-
-    void threadRouter() {
-        (mThis->*mRouter)();
-    }
-
-private:
-    T*              mThis;
-    std::thread*    mThreadHandle;
-    PFN_WorkRoutine mRouter;
+    std::thread*    mThread;
 };
 //******************************************************************************
 #endif

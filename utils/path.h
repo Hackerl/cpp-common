@@ -6,12 +6,10 @@
 #include <libgen.h>
 #include <unistd.h>
 //******************************************************************************
-#ifdef __linux__
-constexpr auto FILE_SYSTEM_PATH_SEPARATOR = '/';
-#elif _WIN32
+#ifdef _WIN32
 constexpr auto FILE_SYSTEM_PATH_SEPARATOR = '\\';
 #else
-#error "OS not supported!"
+constexpr auto FILE_SYSTEM_PATH_SEPARATOR = '/';
 #endif
 //******************************************************************************
 class CPath {

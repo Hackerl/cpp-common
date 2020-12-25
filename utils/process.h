@@ -1,6 +1,7 @@
 #ifndef __Process_H__
 #define __Process_H__
 //******************************************************************************
+#include "path.h"
 #include "string_helper.h"
 #include <fstream>
 #include <list>
@@ -87,7 +88,7 @@ public:
     }
 
     static bool getProcessState(pid_t pid, CProcessState& processState) {
-        std::string statPath = "/proc/" + std::to_string(pid) + "/stat";
+        std::string statPath = CPath::join("/proc", std::to_string(pid), "stat");
         std::ifstream infile(statPath);
 
         if (!infile.is_open())
@@ -163,7 +164,7 @@ public:
     }
 
     static bool getProcessStatus(pid_t pid, CProcessStatus& processStatus) {
-        std::string statPath = "/proc/" + std::to_string(pid) + "/status";
+        std::string statPath = CPath::join("/proc", std::to_string(pid), "status");
         std::ifstream infile(statPath);
 
         if (!infile.is_open())
@@ -220,8 +221,26 @@ public:
         return true;
     }
 
+    static bool getFileMemoryBase(pid_t pid, const std::string& file, CProcessMap& processMap) {
+        std::list<CProcessMap> processMaps;
+
+        if (!getProcessMaps(pid, processMaps))
+            return false;
+
+        auto it = std::find_if(processMaps.begin(), processMaps.end(), [=](const auto& m) {
+            return CStringHelper::findStringIC(m.file, file);
+        });
+
+        if (it == processMaps.end())
+            return false;
+
+        processMap = *it;
+
+        return true;
+    }
+
     static bool getProcessMaps(pid_t pid, std::list<CProcessMap>& processMaps) {
-        std::string mapsPath = "/proc/" + std::to_string(pid) + "/maps";
+        std::string mapsPath = CPath::join("/proc", std::to_string(pid), "maps");
         std::ifstream infile(mapsPath);
 
         if (!infile.is_open())

@@ -5,8 +5,6 @@
 #include "string_helper.h"
 #include <fstream>
 #include <list>
-#include <unistd.h>
-#include <wordexp.h>
 
 constexpr auto QueryProcessStatCount = 17;
 constexpr auto QueryCPUStatCount = 8;
@@ -65,28 +63,6 @@ struct CProcessMap {
 
 class CProcess {
 public:
-    static pid_t create(const char *command) {
-        wordexp_t p = {};
-
-        if (wordexp(command, &p, 0) != 0)
-            return 0;
-
-        if (p.we_wordc == 0) {
-            wordfree(&p);
-            return 0;
-        }
-
-        pid_t child = fork();
-
-        if (child == 0) {
-            execvp(p.we_wordv[0], p.we_wordv);
-        }
-
-        wordfree(&p);
-
-        return child;
-    }
-
     static bool getProcessState(pid_t pid, CProcessState& processState) {
         std::string statPath = CPath::join("/proc", std::to_string(pid), "stat");
         std::ifstream infile(statPath);

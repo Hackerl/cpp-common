@@ -12,7 +12,7 @@ public:
         auto it = std::search(
             strHaystack.begin(), strHaystack.end(),
             strNeedle.begin(), strNeedle.end(),
-            [](char ch1, char ch2) { return toupper(ch1) == toupper(ch2); }
+            [](char ch1, char ch2) { return ::toupper(ch1) == ::toupper(ch2); }
         );
 
         return (it != strHaystack.end());
@@ -85,47 +85,57 @@ public:
         return (!ss.fail() && !ss.bad());
     }
 
-    static void ltrim(std::string &s) {
-        s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
+    static void ltrim(std::string &str) {
+        str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](int ch) {
             return !std::isspace(ch);
         }));
     }
 
-    static void rtrim(std::string &s) {
-        s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
+    static void rtrim(std::string &str) {
+        str.erase(std::find_if(str.rbegin(), str.rend(), [](int ch) {
             return !std::isspace(ch);
-        }).base(), s.end());
+        }).base(), str.end());
     }
 
-    static void trim(std::string &s) {
-        ltrim(s);
-        rtrim(s);
+    static void trim(std::string &str) {
+        ltrim(str);
+        rtrim(str);
     }
 
-    static std::string ltrimCopy(std::string s) {
-        ltrim(s);
-        return s;
+    static std::string ltrimCopy(std::string str) {
+        ltrim(str);
+        return str;
     }
 
-    static std::string rtrimCopy(std::string s) {
-        rtrim(s);
-        return s;
+    static std::string rtrimCopy(std::string str) {
+        rtrim(str);
+        return str;
     }
 
-    static std::string trimCopy(std::string s) {
-        trim(s);
-        return s;
+    static std::string trimCopy(std::string str) {
+        trim(str);
+        return str;
     }
 
-    static void trimExtraSpace(std::string &s) {
-        s.erase(std::unique(std::begin(s), std::end(s), [](unsigned char a, unsigned char b) {
+    static void trimExtraSpace(std::string &str) {
+        str.erase(std::unique(std::begin(str), std::end(str), [](unsigned char a, unsigned char b) {
             return std::isspace(a) && std::isspace(b);
-        }), std::end(s));
+        }), std::end(str));
     }
 
-    static std::string trimExtraSpaceCopy(std::string s) {
-        trimExtraSpace(s);
-        return s;
+    static std::string trimExtraSpaceCopy(std::string str) {
+        trimExtraSpace(str);
+        return str;
+    }
+
+    static std::string tolower(std::string str) {
+        std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+        return str;
+    }
+
+    static std::string toupper(std::string str) {
+        std::transform(str.begin(), str.end(), str.begin(), ::toupper);
+        return str;
     }
 };
 //******************************************************************************

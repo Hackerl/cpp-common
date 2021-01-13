@@ -1,18 +1,8 @@
 #ifndef __CircularBuffer_H__
 #define __CircularBuffer_H__
 //******************************************************************************
-template <class T>
+template <class T, unsigned long N>
 class CCircularBuffer {
-public:
-    explicit CCircularBuffer<T>(unsigned long maxSize) {
-        mMaxSize = maxSize;
-        mBuffer = new T[maxSize]();
-    }
-
-    ~CCircularBuffer<T>() {
-        delete mBuffer;
-    }
-
 public:
     bool enqueue(T item) {
         if (full())
@@ -51,12 +41,12 @@ public:
     }
 
 private:
-    T *mBuffer{};
+    T mBuffer[N]{};
 
 private:
     unsigned long mHead{};
     unsigned long mTail{};
-    unsigned long mMaxSize{};
+    unsigned long mMaxSize{N};
 };
 //******************************************************************************
 #endif

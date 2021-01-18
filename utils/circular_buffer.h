@@ -1,15 +1,37 @@
 #ifndef __CircularBuffer_H__
 #define __CircularBuffer_H__
 //******************************************************************************
+#include <atomic>
+
 template <class T, unsigned long N>
 class CCircularBuffer {
+private:
+    enum emState {
+        IDLE,
+        PUTTING,
+        VALID,
+        TAKING
+    };
+
 public:
     bool enqueue(T item) {
         if (full())
             return false;
 
-        mBuffer[mTail] = item;
-        mTail = (mTail + 1) % mMaxSize;
+        unsigned long index = mTail;
+
+        while (!mTail.compare_exchange_weak(index, (index + 1) % mMaxSize)) {
+            if (full())
+                return false;
+        }
+
+        while (!__sync_bool_compare_and_swap(&mState[index], emState::IDLE, emState::PUTTING)) {
+
+        }
+
+        mBuffer[index] = item;
+
+        __sync_lock_test_and_set(&mState[index], emState::VALID);
 
         return true;
     }
@@ -18,18 +40,33 @@ public:
         if (empty())
             return false;
 
-        item = mBuffer[mHead];
-        mHead = (mHead + 1) % mMaxSize;
+        unsigned long index = mHead;
+
+        while (!mHead.compare_exchange_weak(index, (index + 1) % mMaxSize)) {
+            if (empty())
+                return false;
+        }
+
+        while (!__sync_bool_compare_and_swap(&mState[index], emState::VALID, emState::TAKING)) {
+
+        }
+
+        item = mBuffer[index];
+
+        __sync_lock_test_and_set(&mState[index], emState::IDLE);
 
         return true;
     }
 
 public:
     unsigned long size() {
-        if (mTail >= mHead)
-            return mTail - mHead;
+        unsigned long head = mHead;
+        unsigned long tail = mTail;
 
-        return mMaxSize - (mHead - mTail);
+        if (tail >= head)
+            return tail - head;
+
+        return mMaxSize - (head - tail);
     }
 
     bool empty() {
@@ -42,11 +79,14 @@ public:
 
 private:
     T mBuffer[N]{};
+    emState mState[N]{IDLE};
 
 private:
-    unsigned long mHead{};
-    unsigned long mTail{};
     unsigned long mMaxSize{N};
+
+private:
+    std::atomic<unsigned long> mHead{0};
+    std::atomic<unsigned long> mTail{0};
 };
 //******************************************************************************
 #endif

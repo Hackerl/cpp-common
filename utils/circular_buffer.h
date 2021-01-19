@@ -15,15 +15,12 @@ private:
 
 public:
     bool enqueue(T item) {
-        if (full())
-            return false;
-
         unsigned long index = mTail;
 
-        while (!mTail.compare_exchange_weak(index, (index + 1) % mMaxSize)) {
+        do {
             if (full())
                 return false;
-        }
+        } while (!mTail.compare_exchange_weak(index, (index + 1) % mMaxSize));
 
         while (!__sync_bool_compare_and_swap(&mState[index], emState::IDLE, emState::PUTTING)) {
 
@@ -37,15 +34,12 @@ public:
     }
 
     bool dequeue(T& item) {
-        if (empty())
-            return false;
-
         unsigned long index = mHead;
 
-        while (!mHead.compare_exchange_weak(index, (index + 1) % mMaxSize)) {
+        do {
             if (empty())
                 return false;
-        }
+        } while (!mHead.compare_exchange_weak(index, (index + 1) % mMaxSize));
 
         while (!__sync_bool_compare_and_swap(&mState[index], emState::VALID, emState::TAKING)) {
 

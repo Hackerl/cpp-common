@@ -2,10 +2,13 @@
 #define __CircularBuffer_H__
 //******************************************************************************
 #include <atomic>
+#include <climits>
 
 template <class T, unsigned long N>
 class CCircularBuffer {
 private:
+    static constexpr auto MODULO = ULONG_MAX - (ULONG_MAX % N);
+
     enum emState {
         IDLE,
         PUTTING,
@@ -20,7 +23,9 @@ public:
         do {
             if (full())
                 return false;
-        } while (!mTail.compare_exchange_weak(index, (index + 1) % mMaxSize));
+        } while (!mTail.compare_exchange_weak(index, (index + 1) % MODULO));
+
+        index %= N;
 
         while (!__sync_bool_compare_and_swap(&mState[index], emState::IDLE, emState::PUTTING)) {
 
@@ -39,7 +44,9 @@ public:
         do {
             if (empty())
                 return false;
-        } while (!mHead.compare_exchange_weak(index, (index + 1) % mMaxSize));
+        } while (!mHead.compare_exchange_weak(index, (index + 1) % MODULO));
+
+        index %= N;
 
         while (!__sync_bool_compare_and_swap(&mState[index], emState::VALID, emState::TAKING)) {
 
@@ -54,13 +61,7 @@ public:
 
 public:
     unsigned long size() {
-        unsigned long head = mHead;
-        unsigned long tail = mTail;
-
-        if (tail >= head)
-            return tail - head;
-
-        return mMaxSize - (head - tail);
+        return (mTail % N + N - mHead % N) % N;
     }
 
     bool empty() {
@@ -68,15 +69,12 @@ public:
     }
 
     bool full() {
-        return (mTail + 1) % mMaxSize == mHead;
+        return (mTail + 1) % N == mHead % N;
     }
 
 private:
     T mBuffer[N]{};
     emState mState[N]{IDLE};
-
-private:
-    unsigned long mMaxSize{N};
 
 private:
     std::atomic<unsigned long> mHead{0};

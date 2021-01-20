@@ -12,27 +12,27 @@
 #define MD5_UINT32 unsigned long int
 #endif
 //******************************************************************************
-#define GET_UINT32(n,b,i)                            \
-{                                                    \
-    (n) = ( (MD5_UINT32) (b)[(i)    ]       )       \
-        | ( (MD5_UINT32) (b)[(i) + 1] <<  8 )       \
-        | ( (MD5_UINT32) (b)[(i) + 2] << 16 )       \
-        | ( (MD5_UINT32) (b)[(i) + 3] << 24 );      \
+#define GET_UINT32(n,b,i)                               \
+{                                                       \
+    (n) = ( (MD5_UINT32) (b)[(i)    ]       )           \
+        | ( (MD5_UINT32) (b)[(i) + 1] <<  8 )           \
+        | ( (MD5_UINT32) (b)[(i) + 2] << 16 )           \
+        | ( (MD5_UINT32) (b)[(i) + 3] << 24 );          \
 }
 
-#define PUT_UINT32(n,b,i)                            \
-{                                                    \
-    (b)[(i)    ] = (MD5_UINT8) ( (n)       );       \
-    (b)[(i) + 1] = (MD5_UINT8) ( (n) >>  8 );       \
-    (b)[(i) + 2] = (MD5_UINT8) ( (n) >> 16 );       \
-    (b)[(i) + 3] = (MD5_UINT8) ( (n) >> 24 );       \
+#define PUT_UINT32(n,b,i)                               \
+{                                                       \
+    (b)[(i)    ] = (MD5_UINT8) ( (n)       );           \
+    (b)[(i) + 1] = (MD5_UINT8) ( (n) >>  8 );           \
+    (b)[(i) + 2] = (MD5_UINT8) ( (n) >> 16 );           \
+    (b)[(i) + 3] = (MD5_UINT8) ( (n) >> 24 );           \
 }
 
 #define S(x,n) ((x << n) | ((x & 0xFFFFFFFF) >> (32 - n)))
 
-#define P(a,b,c,d,k,s,t)                            \
-{                                                    \
-    a += F(b,c,d) + X[k] + t; a = S(a,s) + b;        \
+#define P(a,b,c,d,k,s,t)                                \
+{                                                       \
+    a += F(b,c,d) + X[k] + t; a = S(a,s) + b;           \
 }
 //******************************************************************************
 class CMD5

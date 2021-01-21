@@ -17,7 +17,7 @@ private:
     };
 
 public:
-    bool enqueue(T item) {
+    bool enqueue(const T &item) {
         unsigned long index = mTail;
 
         do {
@@ -38,7 +38,7 @@ public:
         return true;
     }
 
-    bool dequeue(T& item) {
+    bool dequeue(T &item) {
         unsigned long index = mHead;
 
         do {

@@ -24,7 +24,6 @@ public:
         std::stringstream ss(str);
         std::string temp;
 
-        // split into new "lines" based on character
         while (getline(ss, temp, splitter)) {
             tokens.push_back(temp);
         }
@@ -47,18 +46,18 @@ public:
         );
     }
 
-    static bool startWith(std::string const &fullString, std::string const &ending) {
-        if (fullString.length() < ending.length())
+    static bool startsWith(const std::string &str, const std::string &prefix) {
+        if (str.length() < prefix.length())
             return false;
 
-        return fullString.compare(0, ending.length(), ending) == 0;
+        return str.compare(0, prefix.length(), prefix) == 0;
     }
 
-    static bool endWith(std::string const &fullString, std::string const &ending) {
-        if (fullString.length() < ending.length())
+    static bool endsWith(const std::string &str, const std::string &suffix) {
+        if (str.length() < suffix.length())
             return false;
 
-        return fullString.compare(fullString.length() - ending.length(), ending.length(), ending) == 0;
+        return str.compare(str.length() - suffix.length(), suffix.length(), suffix) == 0;
     }
 
     template<class T>

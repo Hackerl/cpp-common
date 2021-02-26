@@ -5,6 +5,7 @@
 #include <sstream>
 #include <algorithm>
 #include <numeric>
+#include <memory>
 //******************************************************************************
 class CStringHelper {
 public:
@@ -135,6 +136,19 @@ public:
     static std::string toupper(std::string str) {
         std::transform(str.begin(), str.end(), str.begin(), ::toupper);
         return str;
+    }
+
+    template<typename... Args>
+    static std::string format(const char *fmt, Args... args) {
+        int length = snprintf(nullptr, 0, fmt, args...);
+
+        if (length <= 0)
+            return "";
+
+        std::unique_ptr<char> buffer(new char[length + 1]);
+        snprintf(buffer.get(), length + 1, fmt, args...);
+
+        return std::string(buffer.get(), length);
     }
 };
 //******************************************************************************

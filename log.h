@@ -1,61 +1,182 @@
 #ifndef __Log_H__
 #define __Log_H__
 //******************************************************************************
-#include <cstring>
+#include "thread.h"
+#include "interface.h"
+#include "singleton.h"
+#include "condition.h"
 #include "utils/time_helper.h"
+#include "utils/string_helper.h"
+#include "utils/circular_buffer.h"
+#include "utils/path.h"
+#include <list>
+#include <fstream>
+#include <unistd.h>
 
-#define _FILE strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__
+constexpr const char * LOG_TAGS[] = {"ERROR", "WARN", "INFO", "DEBUG"};
 
-#define NO_LOG          0x00
-#define ERROR_LEVEL     0x01
-#define WARNING_LEVEL   0x02
-#define INFO_LEVEL      0x03
-#define DEBUG_LEVEL     0x04
+enum emLogLevel {
+    ERROR,
+    WARNING,
+    INFO,
+    DEBUG
+};
 
-#ifndef LOG_LEVEL
-#define LOG_LEVEL   DEBUG_LEVEL
-#endif
+class ILogProvider: public Interface {
+public:
+    virtual void write(const std::string &message) = 0;
+};
 
-#define PRINT_FUNCTION(format, ...)      fprintf(stderr, format, __VA_ARGS__)
+class CConsoleProvider: public ILogProvider {
+public:
+    void write(const std::string &message) override {
+        fwrite(message.c_str(), 1, message.length(), stderr);
+    }
+};
 
-#define LOG_FMT             "%s | %-5s | %20s:%-4d] "
-#define LOG_ARGS(LOG_TAG)   CTimeHelper::getTimeString().c_str(), LOG_TAG, _FILE, __LINE__
+class CFileProvider: public ILogProvider {
+public:
+    explicit CFileProvider(const char *name, unsigned long limit = 10 * 1024 * 1024, const char *directory = "/tmp") {
+        mName = name;
+        mLimit = limit;
+        mDirectory = directory;
 
-#define NEWLINE     "\n"
+        mFile.open(getLogPath());
+    }
 
-#define ERROR_TAG   "ERROR"
-#define WARNING_TAG "WARN"
-#define INFO_TAG    "INFO"
-#define DEBUG_TAG   "DEBUG"
+private:
+    std::string getLogPath() {
+        std::string filename = CStringHelper::format(
+                "%s.%d.%ld",
+                mName.c_str(),
+                getpid(),
+                CTimeHelper::getUnixTimestamp()
+        );
 
-#if LOG_LEVEL >= DEBUG_LEVEL
-#define LOG_DEBUG(message, args...)     PRINT_FUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(DEBUG_TAG), ## args)
-#else
-#define LOG_DEBUG(message, args...)
-#endif
+        return CPath::join(mDirectory, filename);
+    }
 
-#if LOG_LEVEL >= INFO_LEVEL
-#define LOG_INFO(message, args...)      PRINT_FUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(INFO_TAG), ## args)
-#else
-#define LOG_INFO(message, args...)
-#endif
+public:
+    void write(const std::string &message) override {
+        if (mFile.tellp() > mLimit) {
+            mFile = std::ofstream(getLogPath());
+        }
 
-#if LOG_LEVEL >= WARNING_LEVEL
-#define LOG_WARNING(message, args...)   PRINT_FUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), ## args)
-#else
-#define LOG_WARNING(message, args...)
-#endif
+        mFile.write(message.c_str(), message.length());
+        mFile.flush();
+    }
 
-#if LOG_LEVEL >= ERROR_LEVEL
-#define LOG_ERROR(message, args...)     PRINT_FUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), ## args)
-#else
-#define LOG_ERROR(message, args...)
-#endif
+private:
+    std::string mName;
+    std::string mDirectory;
 
-#if LOG_LEVEL >= NO_LOGS
-#define LOG_IF_ERROR(condition, message, args...) if (condition) PRINT_FUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), ## args)
-#else
-#define LOG_IF_ERROR(condition, message, args...)
-#endif
+private:
+    unsigned long mLimit;
+    std::ofstream mFile;
+};
+
+template<typename T>
+class CAsyncProvider: public T {
+public:
+    template<typename... Args>
+    explicit CAsyncProvider<T>(Args... args) : T(args...) {
+        mThread.start(this, &CAsyncProvider<T>::loopThread);
+    }
+
+    ~CAsyncProvider<T>() override {
+        mExit = true;
+        mCondition.notify();
+        mThread.stop();
+    }
+
+public:
+    void write(const std::string &message) override {
+        if (mBuffer.full())
+            return;
+
+        mBuffer.enqueue(message);
+        mCondition.notify();
+    }
+
+public:
+    void loopThread() {
+        while (!mExit) {
+            if (mBuffer.empty())
+                mCondition.wait();
+
+            std::string message = {};
+
+            if (!mBuffer.dequeue(message))
+                continue;
+
+            T::write(message);
+        }
+    }
+
+private:
+    bool mExit{false};
+
+private:
+    Condition mCondition;
+    CThread_<CAsyncProvider<T>> mThread;
+    CCircularBuffer<std::string, 100> mBuffer;
+};
+
+struct CProviderRegister {
+    emLogLevel level;
+    ILogProvider *provider;
+};
+
+class CLogger {
+#define gLogger SINGLETON_(CLogger)
+public:
+    ~CLogger() {
+        for (const auto &r : mRegistry) {
+            delete r.provider;
+        }
+    }
+
+public:
+    template<typename T, typename... Args>
+    void log(emLogLevel level, const T format, Args... args) {
+        std::string message = CStringHelper::format(format, args...);
+
+        for (const auto &r : mRegistry) {
+            if (level > r.level)
+                continue;
+
+            r.provider->write(message);
+        }
+    }
+
+public:
+    void addProvider(emLogLevel level, ILogProvider *provider) {
+        mRegistry.push_back({level, provider});
+    }
+
+private:
+    std::list<CProviderRegister> mRegistry;
+};
+
+#define INIT_CONSOLE_LOG(level)         gLogger->addProvider(level, new CConsoleProvider())
+#define INIT_FILE_LOG(level, name, args...) \
+                                        gLogger->addProvider(level, new CAsyncProvider<CFileProvider>(name, ## args))
+
+#define NEWLINE                         "\n"
+#define SOURCE                          strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__
+
+#define LOG_FMT                         "%s | %-5s | %20s:%-4d] "
+#define LOG_TAG(level)                  LOG_TAGS[level]
+#define LOG_ARGS(level)                 CTimeHelper::getTimeString().c_str(), LOG_TAG(level), SOURCE, __LINE__
+
+#undef LOG_DEBUG
+#undef LOG_INFO
+#undef LOG_WARNING
+#undef LOG_ERROR
+
+#define LOG_DEBUG(message, args...)     gLogger->log(DEBUG, LOG_FMT message NEWLINE, LOG_ARGS(DEBUG), ## args)
+#define LOG_INFO(message, args...)      gLogger->log(INFO, LOG_FMT message NEWLINE, LOG_ARGS(INFO), ## args)
+#define LOG_WARNING(message, args...)   gLogger->log(WARNING, LOG_FMT message NEWLINE, LOG_ARGS(WARNING), ## args)
+#define LOG_ERROR(message, args...)     gLogger->log(ERROR, LOG_FMT message NEWLINE, LOG_ARGS(ERROR), ## args)
 //******************************************************************************
 #endif

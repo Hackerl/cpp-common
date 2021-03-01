@@ -47,7 +47,7 @@ public:
 private:
     std::string getLogPath() {
         std::string filename = CStringHelper::format(
-                "%s.%d.%ld",
+                "%s.%d.%ld.log",
                 mName.c_str(),
                 getpid(),
                 CTimeHelper::getUnixTimestamp()

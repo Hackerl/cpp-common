@@ -1,27 +1,19 @@
 #ifndef __FileWalk_H__
 #define __FileWalk_H__
 //******************************************************************************
+#include "path.h"
 #include <dirent.h>
 #include <string>
 #include <stack>
-#include "path.h"
 //******************************************************************************
-class CFileWalkIterator;
-
-struct CDIRContext {
-    DIR* d;
-    std::string path;
-    unsigned int deep;
-};
-
-class CFileItem {
+class CFileEntry {
 public:
-    bool operator!=(const CFileItem& it) const {
-        return parent != it.parent || filename != it.filename;
+    bool operator!=(const CFileEntry &entry) const {
+        return parent != entry.parent || filename != entry.filename;
     }
 
-    bool operator==(const CFileItem& it) const {
-        return parent == it.parent && filename == it.filename;
+    bool operator==(const CFileEntry& entry) const {
+        return parent == entry.parent && filename == entry.filename;
     }
 
 public:
@@ -30,46 +22,65 @@ public:
     }
 
 public:
-    bool isDIR{};
+    void reset() {
+        parent.clear();
+        filename.clear();
+    }
+
+public:
+    bool isDirectory{};
+
+public:
     std::string parent;
     std::string filename;
 };
 
-class CFileWalkIterator {
+struct CDIRContext {
+    DIR* dir;
+    std::string path;
+    unsigned long deep;
+};
+
+class CFileIterator {
 public:
-    CFileWalkIterator() {
-        mDeep = 0;
+    CFileIterator() = default;
+
+    explicit CFileIterator(const std::string &directory, unsigned long deep) {
+        mDeep = deep;
+        DIR *dir = opendir(directory.c_str());
+
+        if (dir) {
+            mContexts.push({dir, CPath::getAbsolutePath(directory.c_str()), 0});
+            this->operator++();
+        }
     }
 
-    explicit CFileWalkIterator(const std::string& path, unsigned int deep) {
-        mDeep = deep;
-        auto d = opendir(path.c_str());
+    CFileIterator(CFileIterator &&iterator) noexcept {
+        mDeep = iterator.mDeep;
+        mEntry = iterator.mEntry;
+        mContexts = std::move(iterator.mContexts);
+    }
 
-        if (d) {
-            mDIRStack.push({d, path, 0});
-            next();
+    CFileIterator(CFileIterator &iterator) noexcept {
+        mDeep = iterator.mDeep;
+        mEntry = iterator.mEntry;
+        mContexts = std::move(iterator.mContexts);
+    }
+
+    ~CFileIterator() {
+        while(!mContexts.empty()) {
+            closedir(mContexts.top().dir);
+            mContexts.pop();
         }
     }
 
 public:
-    bool operator!=(const CFileWalkIterator& it) const {
-        return mItem != it.mItem;
-    }
+    CFileIterator &operator++() {
+        mEntry.reset();
 
-    bool operator==(const CFileWalkIterator& it) const {
-        return mItem == it.mItem;
-    }
-
-public:
-    void next() {
-        mItem = CFileItem();
-
-        if (mDIRStack.empty())
-            return;
-
-        do {
-            auto context = mDIRStack.top();
-            auto entry = readdir(context.d);
+        while (!mContexts.empty()) {
+            CDIRContext &context = mContexts.top();
+            dirent *entry = readdir(context.dir);
 
             if (entry) {
                 std::string parent = context.path;
@@ -81,66 +92,73 @@ public:
                 bool isDIR = entry->d_type == DT_DIR;
 
                 if (isDIR && mDeep > context.deep + 1) {
-                    auto subPath = CPath::join(parent, filename);
-                    auto subDIR = opendir(subPath.c_str());
+                    std::string subPath = CPath::join(parent, filename);
+                    DIR *subDIR = opendir(subPath.c_str());
 
-                    if (subDIR)
-                        mDIRStack.push({subDIR, subPath, context.deep + 1});
+                    if (subDIR) {
+                        mContexts.push({subDIR, subPath, context.deep + 1});
+                    }
                 }
 
-                mItem.isDIR = isDIR;
-                mItem.parent = parent;
-                mItem.filename = filename;
+                mEntry = {isDIR, parent, filename};
 
                 break;
             }
 
-            mDIRStack.pop();
-            closedir(context.d);
-        } while (!mDIRStack.empty());
-    }
+            closedir(context.dir);
+            mContexts.pop();
+        }
 
-public:
-    CFileWalkIterator& operator++()  {
-        next();
         return *this;
     }
 
 public:
-    CFileItem *operator->() {
-        return &mItem;
+    bool operator!=(const CFileIterator& it) const {
+        return mEntry != it.mEntry;
     }
 
-    CFileItem &operator*() {
-        return mItem;
+    bool operator==(const CFileIterator& it) const {
+        return mEntry == it.mEntry;
+    }
+
+    CFileEntry *operator->() {
+        return &mEntry;
+    }
+
+    CFileEntry &operator*() {
+        return mEntry;
     }
 
 private:
-    CFileItem mItem;
-    unsigned int mDeep;
-    std::stack<CDIRContext> mDIRStack;
+    unsigned long mDeep{};
+
+private:
+    CFileEntry mEntry;
+    std::stack<CDIRContext> mContexts;
 };
 
-class CFileWalk {
-    typedef CFileWalkIterator iterator;
+class CFileWalker {
 public:
-    explicit CFileWalk(const char *path, unsigned int deep = 1) {
-        mPath = path;
+    explicit CFileWalker(const std::string &directory, unsigned long deep = 1) {
+        mDirectory = directory;
         mDeep = deep;
     }
 
 public:
-    iterator begin() {
-        return CFileWalk::iterator(mPath, mDeep);
+    CFileIterator begin() {
+        return CFileIterator(mDirectory, mDeep);
     }
 
-    iterator end() {
-        return CFileWalk::iterator();
+    CFileIterator end() {
+        return mEndIterator;
     }
 
 private:
-    std::string mPath;
-    unsigned int mDeep;
+    CFileIterator mEndIterator;
+
+private:
+    unsigned long mDeep;
+    std::string mDirectory;
 };
 //******************************************************************************
 #endif

@@ -5,6 +5,7 @@
 #include "interface.h"
 #include "singleton.h"
 #include "condition.h"
+#include "utils/shell.h"
 #include "utils/time_helper.h"
 #include "utils/string_helper.h"
 #include "utils/circular_buffer.h"
@@ -36,10 +37,15 @@ public:
 
 class CFileProvider: public ILogProvider {
 public:
-    explicit CFileProvider(const char *name, unsigned long limit = 10 * 1024 * 1024, const char *directory = "/tmp") {
+    explicit CFileProvider(
+            const char *name,
+            unsigned long limit = 10 * 1024 * 1024,
+            const char *directory = "/tmp",
+            unsigned long remain = 10) {
         mName = name;
         mLimit = limit;
         mDirectory = directory;
+        mRemain = remain;
 
         mFile.open(getLogPath());
     }
@@ -56,10 +62,30 @@ private:
         return CPath::join(mDirectory, filename);
     }
 
+    void clean() {
+        std::list<std::string> logs;
+        std::string pattern = CStringHelper::format("%s.%d.*.log", mName.c_str(), getpid());
+
+        if (!CShellAPI::match(CPath::join(mDirectory, pattern), logs))
+            return;
+
+        unsigned long size = logs.size();
+
+        if (size <= mRemain)
+            return;
+
+        std::list<std::string> expired(logs.begin(), std::next(logs.begin(), size - mRemain));
+
+        for (const auto &path: expired) {
+            remove(path.c_str());
+        }
+    }
+
 public:
     void write(const std::string &message) override {
         if (mFile.tellp() > mLimit) {
             mFile = std::ofstream(getLogPath());
+            clean();
         }
 
         mFile.write(message.c_str(), message.length());
@@ -72,6 +98,9 @@ private:
 
 private:
     unsigned long mLimit;
+    unsigned long mRemain;
+
+private:
     std::ofstream mFile;
 };
 

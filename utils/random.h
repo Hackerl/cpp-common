@@ -2,6 +2,7 @@
 #define __Random_H__
 //******************************************************************************
 #include "binascii.h"
+#include "string_helper.h"
 #include <random>
 #include <common/guid.h>
 
@@ -26,15 +27,15 @@ public:
 
     std::string generateUUID() {
         GUID guid = generateGUID();
-        std::ostringstream ss;
 
-        ss <<  CBinascii::hexlify((const unsigned char *)&guid.data1, sizeof(guid.data1));
-        ss << "-" << CBinascii::hexlify((const unsigned char *)&guid.data2, sizeof(guid.data2));
-        ss << "-" << CBinascii::hexlify((const unsigned char *)&guid.data3, sizeof(guid.data3));
-        ss << "-" << CBinascii::hexlify((const unsigned char *)&guid.data4, 2);
-        ss << "-" << CBinascii::hexlify((const unsigned char *)&guid.data4 + 2, sizeof(guid.data4) - 2);
-
-        return ss.str();
+        return CStringHelper::format(
+                "%s-%s-%s-%s-%s",
+                CBinascii::hexlify((const unsigned char *)&guid.data1, sizeof(guid.data1)).c_str(),
+                CBinascii::hexlify((const unsigned char *)&guid.data2, sizeof(guid.data2)).c_str(),
+                CBinascii::hexlify((const unsigned char *)&guid.data3, sizeof(guid.data3)).c_str(),
+                CBinascii::hexlify((const unsigned char *)&guid.data4, 2).c_str(),
+                CBinascii::hexlify((const unsigned char *)&guid.data4 + 2, sizeof(guid.data4) - 2).c_str()
+                );
     }
 
 private:

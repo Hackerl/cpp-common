@@ -1,6 +1,6 @@
-#ifndef __Log_H__
-#define __Log_H__
-//******************************************************************************
+#ifndef LOG_H
+#define LOG_H
+
 #include "thread.h"
 #include "interface.h"
 #include "singleton.h"
@@ -74,7 +74,7 @@ private:
         if (size <= mRemain)
             return;
 
-        std::list<std::string> expired(logs.begin(), std::next(logs.begin(), size - mRemain));
+        std::list<std::string> expired(logs.begin(), std::next(logs.begin(), (std::ptrdiff_t)(size - mRemain)));
 
         for (const auto &path: expired) {
             remove(path.c_str());
@@ -88,7 +88,7 @@ public:
             clean();
         }
 
-        mFile.write(message.c_str(), message.length());
+        mFile.write(message.c_str(), (std::streamsize)message.length());
         mFile.flush();
     }
 
@@ -147,7 +147,7 @@ private:
 
 private:
     Condition mCondition;
-    CThread_<CAsyncProvider<T>> mThread;
+    CThread<CAsyncProvider<T>> mThread;
     CCircularBuffer<std::string, 100> mBuffer;
 };
 
@@ -157,7 +157,7 @@ struct CProviderRegister {
 };
 
 class CLogger {
-#define gLogger SINGLETON_(CLogger)
+#define gLogger SINGLETON(CLogger)
 public:
     ~CLogger() {
         for (const auto &r : mRegistry) {
@@ -207,5 +207,5 @@ private:
 #define LOG_INFO(message, args...)      gLogger->log(INFO, LOG_FMT message NEWLINE, LOG_ARGS(INFO), ## args)
 #define LOG_WARNING(message, args...)   gLogger->log(WARNING, LOG_FMT message NEWLINE, LOG_ARGS(WARNING), ## args)
 #define LOG_ERROR(message, args...)     gLogger->log(ERROR, LOG_FMT message NEWLINE, LOG_ARGS(ERROR), ## args)
-//******************************************************************************
+
 #endif

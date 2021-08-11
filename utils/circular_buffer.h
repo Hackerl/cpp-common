@@ -1,10 +1,10 @@
-#ifndef __CircularBuffer_H__
-#define __CircularBuffer_H__
-//******************************************************************************
+#ifndef CIRCULAR_BUFFER_H
+#define CIRCULAR_BUFFER_H
+
 #include <atomic>
 #include <climits>
 
-template <class T, unsigned long N>
+template <typename T, unsigned long N>
 class CCircularBuffer {
 private:
     static constexpr auto MODULO = ULONG_MAX - (ULONG_MAX % N);
@@ -80,5 +80,5 @@ private:
     std::atomic<unsigned long> mHead{0};
     std::atomic<unsigned long> mTail{0};
 };
-//******************************************************************************
+
 #endif

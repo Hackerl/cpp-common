@@ -1,6 +1,6 @@
-#ifndef __TimeHelper_H__
-#define __TimeHelper_H__
-//******************************************************************************
+#ifndef TIME_HELPER_H
+#define TIME_HELPER_H
+
 #include <ctime>
 #include <string>
 
@@ -23,5 +23,5 @@ public:
         return buffer;
     }
 };
-//******************************************************************************
+
 #endif

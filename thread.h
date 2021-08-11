@@ -1,20 +1,17 @@
-#ifndef __Thread_H__
-#define __Thread_H__
-//******************************************************************************
+#ifndef THREAD_H
+#define THREAD_H
+
 #include <thread>
 
 template<typename T>
-class CThread_ {
+class CThread {
 public:
-    typedef void (T::*PFN_WorkRoutine)();
-
-public:
-    CThread_() {
+    CThread() {
         mThread = nullptr;
     }
 
 public:
-    bool start(T* t, PFN_WorkRoutine router) {
+    bool start(T *t, void (T::*router)()) {
         if (isRunning()) {
             stop();
         }
@@ -39,7 +36,7 @@ public:
     }
 
 private:
-    std::thread*    mThread;
+    std::thread *mThread;
 };
-//******************************************************************************
+
 #endif

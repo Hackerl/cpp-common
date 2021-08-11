@@ -1,75 +1,71 @@
-#ifndef __COM_H__
-#define __COM_H__
-//******************************************************************************
+#ifndef COM_H
+#define COM_H
+
 #include "interface.h"
 #include "utils/string_helper.h"
-//******************************************************************************
-typedef int(*PFN_GetInterface)(InterfaceID, void**);
-//******************************************************************************
+
+using GetInterfacePtr = int (*)(InterfaceID, void **);
+
 #ifdef __linux__ 
-//******************************************************************************
 #include <dlfcn.h>
-//******************************************************************************
-constexpr auto LibraryExtension = ".so";
-//******************************************************************************
-inline int CreateInstance(const char* path, InterfaceID iid, void** lpInterface)
-{
-    if (!lpInterface)
+
+constexpr auto EXTENSION = ".so";
+
+static int CreateInstance(const char *path, InterfaceID iid, void **instance) {
+    if (!instance)
         return -1;
 
     std::string libraryPath = path;
 
-    if (!CStringHelper::endWith(libraryPath, LibraryExtension))
-        libraryPath.append(LibraryExtension);
+    if (!CStringHelper::endWith(libraryPath, EXTENSION))
+        libraryPath.append(EXTENSION);
 
-    void* DLHandle = dlopen(libraryPath.c_str(), RTLD_LAZY);
+    void *handle = dlopen(libraryPath.c_str(), RTLD_LAZY);
 
-    if (!DLHandle)
+    if (!handle)
         return -1;
 
-    auto pfnGetInterface = (PFN_GetInterface)dlsym(DLHandle, "GetInterface");
+    auto fn = (GetInterfacePtr)dlsym(handle, "GetInterface");
 
-    if (!pfnGetInterface) {
-        dlclose(DLHandle);
+    if (!fn) {
+        dlclose(handle);
         return -1;
     }
 
-    return pfnGetInterface(iid, lpInterface);
+    return fn(iid, instance);
 }
-//******************************************************************************
+
 #elif _WIN32
-//******************************************************************************
 #include <Windows.h>
-//******************************************************************************
-constexpr auto LibraryExtension = ".dll";
-//******************************************************************************
-inline int CreateInstance(const char* path, InterfaceID iid, void** lpInterface)
-{
-    if (!lpInterface)
+
+constexpr auto EXTENSION = ".dll";
+
+static int CreateInstance(const char *path, InterfaceID iid, void **instance) {
+    if (!instance)
         return -1;
 
     std::string libraryPath = path;
 
-    if (!CStringHelper::endWith(libraryPath, LibraryExtension))
-        libraryPath.append(LibraryExtension);
+    if (!CStringHelper::endWith(libraryPath, EXTENSION))
+        libraryPath.append(EXTENSION);
 
-    HMODULE DLHandle = LoadLibraryExA(libraryPath.c_str(), nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
+    HMODULE handle = LoadLibraryExA(libraryPath.c_str(), nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
 
-    if (!DLHandle)
+    if (!handle)
         return -1;
 
-    auto pfnGetInterface = (PFN_GetInterface)GetProcAddress(DLHandle, "GetInterface");
+    auto fn = (GetInterfacePtr)GetProcAddress(handle, "GetInterface");
 
-    if (!pfnGetInterface) {
-        FreeLibrary(DLHandle);
+    if (!fn) {
+        FreeLibrary(handle);
         return -1;
     }
 
-    return pfnGetInterface(iid, lpInterface);;
+    return fn(iid, instance);
 }
-//******************************************************************************
+
 #else
-#error "OS not supported!"
+#error "unknown arch"
 #endif
-//******************************************************************************
+
 #endif

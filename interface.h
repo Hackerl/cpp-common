@@ -1,6 +1,6 @@
-#ifndef __Interface_H__
-#define __Interface_H__
-//******************************************************************************
+#ifndef INTERFACE_H
+#define INTERFACE_H
+
 #include "guid.h"
 
 class Interface {
@@ -8,6 +8,6 @@ public:
     virtual ~Interface() = default;
 };
 
-typedef GUID InterfaceID;
-//******************************************************************************
+using InterfaceID = GUID;
+
 #endif

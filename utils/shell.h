@@ -1,11 +1,11 @@
-#ifndef __Shell_H__
-#define __Shell_H__
-//******************************************************************************
+#ifndef SHELL_H
+#define SHELL_H
+
 #include <list>
 #include <string>
 #include <glob.h>
 #include <wordexp.h>
-//******************************************************************************
+
 class CShellAPI {
 public:
     static bool match(const std::string &pattern, std::list<std::string> &paths) {
@@ -42,5 +42,5 @@ public:
         return true;
     }
 };
-//******************************************************************************
+
 #endif

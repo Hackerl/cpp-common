@@ -1,9 +1,9 @@
-#ifndef __Unicorn_H__
-#define __Unicorn_H__
-//******************************************************************************
+#ifndef UNICORN_H
+#define UNICORN_H
+
 #include <fcntl.h>
 #include <unistd.h>
-//******************************************************************************
+
 class CUnicorn {
 public:
     explicit CUnicorn(const char *path) {
@@ -47,5 +47,5 @@ private:
 private:
     int fd;
 };
-//******************************************************************************
+
 #endif

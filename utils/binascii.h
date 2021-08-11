@@ -1,9 +1,7 @@
-#ifndef __Binascii_H__
-#define __Binascii_H__
-//******************************************************************************
+#ifndef BINASCII_H
+#define BINASCII_H
+
 #include "string_helper.h"
-#include <vector>
-#include <sstream>
 
 constexpr char HEX_MAP[] = {
         '0', '1', '2', '3', '4', '5', '6', '7',
@@ -38,5 +36,5 @@ public:
         return buffer;
     }
 };
-//******************************************************************************
+
 #endif

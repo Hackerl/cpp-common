@@ -1,15 +1,15 @@
-#ifndef __StringHelper_H__
-#define __StringHelper_H__
-//******************************************************************************
+#ifndef STRING_HELPER_H
+#define STRING_HELPER_H
+
 #include <vector>
 #include <sstream>
 #include <algorithm>
 #include <numeric>
 #include <memory>
-//******************************************************************************
+
 class CStringHelper {
 public:
-    static bool findStringIC(const std::string & strHaystack, const std::string & strNeedle) {
+    static bool findStringIC(const std::string &strHaystack, const std::string &strNeedle) {
         auto it = std::search(
             strHaystack.begin(), strHaystack.end(),
             strNeedle.begin(), strNeedle.end(),
@@ -19,7 +19,7 @@ public:
         return (it != strHaystack.end());
     }
 
-    static std::vector<std::string> split(const std::string& str, char splitter) {
+    static std::vector<std::string> split(const std::string &str, char splitter) {
         std::vector<std::string> tokens;
 
         std::stringstream ss(str);
@@ -32,8 +32,8 @@ public:
         return tokens;
     }
 
-    template<class T>
-    static std::string join(const T& containers, const char* delimiter) {
+    template<typename T>
+    static std::string join(const T &containers, const char *delimiter) {
         if (containers.empty())
             return "";
 
@@ -61,8 +61,8 @@ public:
         return str.compare(str.length() - suffix.length(), suffix.length(), suffix) == 0;
     }
 
-    template<class T>
-    static bool toNumber(const std::string& str, T& number, int base = 10) {
+    template<typename T>
+    static bool toNumber(const std::string &str, T &number, int base = 10) {
         std::istringstream ss(str);
 
         switch (base) {
@@ -148,8 +148,8 @@ public:
         std::unique_ptr<char> buffer(new char[length + 1]);
         snprintf(buffer.get(), length + 1, fmt, args...);
 
-        return std::string(buffer.get(), length);
+        return {buffer.get(), (std::size_t)length};
     }
 };
-//******************************************************************************
+
 #endif

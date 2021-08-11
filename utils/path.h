@@ -1,17 +1,17 @@
-#ifndef __Path_H__
-#define __Path_H__
-//******************************************************************************
+#ifndef PATH_H
+#define PATH_H
+
 #include <string>
 #include <climits>
 #include <libgen.h>
 #include <unistd.h>
-//******************************************************************************
+
 #ifdef _WIN32
 constexpr auto FILE_SYSTEM_PATH_SEPARATOR = '\\';
 #else
 constexpr auto FILE_SYSTEM_PATH_SEPARATOR = '/';
 #endif
-//******************************************************************************
+
 class CPath {
 public:
     static std::string getPathFromFD(int fd) {
@@ -85,5 +85,5 @@ private:
         return path;
     }
 };
-//******************************************************************************
+
 #endif

@@ -1,6 +1,6 @@
-#ifndef __GUID_H__
-#define __GUID_H__
-//******************************************************************************
+#ifndef GUID_H
+#define GUID_H
+
 #include <cstring>
 
 struct GUID {
@@ -13,5 +13,5 @@ struct GUID {
         return (data1 == guid.data1 && data2 == guid.data2 && data3 == guid.data3 && !memcmp(data4, guid.data4, sizeof(data4)));
     }
 };
-//******************************************************************************
+
 #endif

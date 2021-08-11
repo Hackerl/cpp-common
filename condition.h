@@ -1,9 +1,9 @@
-#ifndef __Condition_H__
-#define __Condition_H__
-//******************************************************************************
+#ifndef CONDITION_H
+#define CONDITION_H
+
 #include <mutex>
 #include <condition_variable>
-//******************************************************************************
+
 class Condition {
 public:
     Condition() {
@@ -32,5 +32,5 @@ private:
     std::mutex mMutex;
     std::condition_variable mCond;
 };
-//******************************************************************************
+
 #endif

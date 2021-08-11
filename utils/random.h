@@ -1,8 +1,7 @@
-#ifndef __Random_H__
-#define __Random_H__
-//******************************************************************************
+#ifndef RANDOM_H
+#define RANDOM_H
+
 #include "binascii.h"
-#include "string_helper.h"
 #include <random>
 #include <common/guid.h>
 
@@ -41,5 +40,5 @@ public:
 private:
     std::random_device mRandomDev;
 };
-//******************************************************************************
+
 #endif

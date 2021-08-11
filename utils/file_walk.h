@@ -1,11 +1,11 @@
-#ifndef __FileWalk_H__
-#define __FileWalk_H__
-//******************************************************************************
+#ifndef FILE_WALK_H
+#define FILE_WALK_H
+
 #include "path.h"
 #include <dirent.h>
 #include <string>
 #include <stack>
-//******************************************************************************
+
 class CFileEntry {
 public:
     bool operator!=(const CFileEntry &entry) const {
@@ -160,5 +160,5 @@ private:
     unsigned long mDeep;
     std::string mDirectory;
 };
-//******************************************************************************
+
 #endif

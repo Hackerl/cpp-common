@@ -1,16 +1,14 @@
-#ifndef __Singleton_H__
-#define __Singleton_H__
-//******************************************************************************
-#include "mutex.h"
+#ifndef SINGLETON_H
+#define SINGLETON_H
 
 template<typename T>
 struct Singleton {
-    static T* getInstance() {
+    static T *getInstance() {
         static T instance;
         return &instance;
     }
 };
 
-#define SINGLETON_(T) Singleton<T>::getInstance()
-//******************************************************************************
+#define SINGLETON(T) Singleton<T>::getInstance()
+
 #endif

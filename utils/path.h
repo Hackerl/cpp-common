@@ -26,7 +26,7 @@ public:
         if (length == -1)
             return "";
 
-        return std::string(exePath, length);
+        return {exePath, (size_t)length};
     }
 
     static std::string getAPPDir() {
@@ -36,7 +36,7 @@ public:
         if (length == -1)
             return "";
 
-        return std::string(dirname(exePath));
+        return {dirname(exePath)};
     }
 
     static std::string getAPPPath() {
@@ -46,7 +46,7 @@ public:
         if (length == -1)
             return "";
 
-        return std::string(exePath, length);
+        return {exePath, (size_t)length};
     }
 
     static std::string getAPPName() {
@@ -56,7 +56,7 @@ public:
         if (length == -1)
             return "";
 
-        return std::string(basename(exePath));
+        return {basename(exePath)};
     }
 
     static std::string getAbsolutePath(const char* path) {
@@ -65,7 +65,7 @@ public:
         if (!realpath(path, absolutePath))
             return "";
 
-        return std::string(absolutePath);
+        return {absolutePath};
     }
 
     template<typename... Args>

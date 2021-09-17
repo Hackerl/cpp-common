@@ -14,62 +14,53 @@ constexpr auto FILE_SYSTEM_PATH_SEPARATOR = '/';
 
 class CPath {
 public:
-    static std::string getPathFromFD(int fd) {
-        if (fd < 0)
+    static std::string getFileDescriptorPath(int fd) {
+        char buffer[PATH_MAX + 1] = {};
+
+        if (readlink(join("/proc/self/fd", std::to_string(fd)).c_str(), buffer, PATH_MAX) == -1)
             return "";
 
-        std::string FDLinkPath = "/proc/self/fd/" + std::to_string(fd);
-
-        char exePath[PATH_MAX] = {};
-        ssize_t length = readlink(FDLinkPath.c_str(), exePath, PATH_MAX);
-
-        if (length == -1)
-            return "";
-
-        return {exePath, (size_t)length};
+        return {buffer};
     }
 
-    static std::string getAPPDir() {
-        char exePath[PATH_MAX] = {};
-        ssize_t length = readlink("/proc/self/exe", exePath, PATH_MAX);
+    static std::string getApplicationDirectory() {
+        char buffer[PATH_MAX + 1] = {};
 
-        if (length == -1)
+        if (readlink("/proc/self/exe", buffer, PATH_MAX) == -1)
             return "";
 
-        return {dirname(exePath)};
+        return {dirname(buffer)};
     }
 
-    static std::string getAPPPath() {
-        char exePath[PATH_MAX] = {};
-        ssize_t length = readlink("/proc/self/exe", exePath, PATH_MAX);
+    static std::string getApplicationPath() {
+        char buffer[PATH_MAX + 1] = {};
 
-        if (length == -1)
+        if (readlink("/proc/self/exe", buffer, PATH_MAX) == -1)
             return "";
 
-        return {exePath, (size_t)length};
+        return {buffer};
     }
 
-    static std::string getAPPName() {
-        char exePath[PATH_MAX] = {};
-        ssize_t length = readlink("/proc/self/exe", exePath, PATH_MAX);
+    static std::string getApplicationName() {
+        char buffer[PATH_MAX + 1] = {};
 
-        if (length == -1)
+        if (readlink("/proc/self/exe", buffer, PATH_MAX) == -1)
             return "";
 
-        return {basename(exePath)};
+        return {basename(buffer)};
     }
 
-    static std::string getAbsolutePath(const char* path) {
-        char absolutePath[PATH_MAX] = {};
+    static std::string getAbsolutePath(const char *path) {
+        char buffer[PATH_MAX] = {};
 
-        if (!realpath(path, absolutePath))
+        if (!realpath(path, buffer))
             return "";
 
-        return {absolutePath};
+        return {buffer};
     }
 
     template<typename... Args>
-    static std::string join(const std::string& path, Args... args) {
+    static std::string join(const std::string &path, Args... args) {
         if (path.empty())
             return join(args...);
 
@@ -81,7 +72,7 @@ public:
     }
 
 private:
-    static std::string join(const std::string& path) {
+    static std::string join(const std::string &path) {
         return path;
     }
 };

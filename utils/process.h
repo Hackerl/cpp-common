@@ -6,8 +6,9 @@
 #include <fstream>
 #include <list>
 
-constexpr auto QueryProcessStatCount = 17;
-constexpr auto QueryCPUStatCount = 8;
+constexpr auto SYSTEM_STAT_FIELDS = 8;
+constexpr auto PROCESS_STAT_FIELDS = 17;
+constexpr auto PROCESS_MAP_FIELDS = 5;
 
 struct CProcessState {
     int pid;
@@ -54,34 +55,34 @@ struct CSystemMemory {
 struct CProcessMap {
     unsigned long start;
     unsigned long end;
-    std::string flags;
-    unsigned long pageOff;
-    std::string dev;
+    std::string permission;
+    unsigned long offset;
+    std::string device;
     unsigned long inode;
-    std::string file;
+    std::string pathname;
 };
 
 class CProcess {
 public:
     static bool getProcessState(pid_t pid, CProcessState &processState) {
-        std::string statPath = CPath::join("/proc", std::to_string(pid), "stat");
-        std::ifstream infile(statPath);
+        std::string path = CPath::join("/proc", std::to_string(pid), "stat");
+        std::ifstream stream(path);
 
-        if (!infile.is_open())
+        if (!stream.is_open())
             return false;
 
         std::string line;
-        std::getline(infile, line);
+        std::getline(stream, line);
 
         if (line.empty())
             return false;
 
-        auto stats = CStringHelper::split(line, ' ');
+        std::vector<std::string> stats = CStringHelper::split(line, ' ');
 
-        if (stats.size() < QueryProcessStatCount)
+        if (stats.size() < PROCESS_STAT_FIELDS)
             return false;
 
-        auto index = 0;
+        int index = 0;
 
         CStringHelper::toNumber(stats[index++], processState.pid);
 
@@ -107,24 +108,24 @@ public:
     }
 
     static bool getSystemState(CSystemState &systemState) {
-        std::ifstream infile("/proc/stat");
+        std::ifstream stream("/proc/stat");
 
-        if (!infile.is_open())
+        if (!stream.is_open())
             return false;
 
         std::string line;
-        std::getline(infile, line);
+        std::getline(stream, line);
 
         if (line.empty())
             return false;
 
         CStringHelper::trimExtraSpace(line);
-        auto stats = CStringHelper::split(line, ' ');
+        std::vector<std::string> stats = CStringHelper::split(line, ' ');
 
-        if (stats.size() < QueryCPUStatCount)
+        if (stats.size() < SYSTEM_STAT_FIELDS)
             return false;
 
-        auto index = 0;
+        int index = 0;
 
         systemState.name = stats[index++];
 
@@ -140,31 +141,28 @@ public:
     }
 
     static bool getProcessStatus(pid_t pid, CProcessStatus &processStatus) {
-        std::string statPath = CPath::join("/proc", std::to_string(pid), "status");
-        std::ifstream infile(statPath);
+        std::string path = CPath::join("/proc", std::to_string(pid), "status");
+        std::ifstream stream(path);
 
-        if (!infile.is_open())
+        if (!stream.is_open())
             return false;
 
         std::string line;
 
-        while (std::getline(infile, line)) {
-            auto tokens = CStringHelper::split(line, ':');
+        while (std::getline(stream, line)) {
+            std::vector<std::string> tokens = CStringHelper::split(line, ':');
 
             if (tokens.size() != 2)
                 continue;
 
-            auto key = tokens[0];
-            auto value = tokens[1];
-
-            if (key == "Name") {
-                processStatus.name = CStringHelper::trimCopy(value);
-            } else if (key == "State") {
-                processStatus.state = CStringHelper::trimCopy(value);
-            } else if (key == "VmRSS") {
-                CStringHelper::toNumber(value, processStatus.vmRSS);
-            } else if (key == "Threads") {
-                CStringHelper::toNumber(value, processStatus.threads);
+            if (tokens[0] == "Name") {
+                processStatus.name = CStringHelper::trimCopy(tokens[1]);
+            } else if (tokens[0] == "State") {
+                processStatus.state = CStringHelper::trimCopy(tokens[1]);
+            } else if (tokens[0] == "VmRSS") {
+                CStringHelper::toNumber(tokens[1], processStatus.vmRSS);
+            } else if (tokens[0] == "Threads") {
+                CStringHelper::toNumber(tokens[1], processStatus.threads);
             }
         }
 
@@ -172,39 +170,35 @@ public:
     }
 
     static bool getSystemMemory(CSystemMemory &systemMemory) {
-        std::string statPath = "/proc/meminfo";
-        std::ifstream infile(statPath);
+        std::ifstream steam("/proc/meminfo");
 
-        if (!infile.is_open())
+        if (!steam.is_open())
             return false;
 
         std::string line;
 
-        while (std::getline(infile, line)) {
-            auto tokens = CStringHelper::split(line, ':');
+        while (std::getline(steam, line)) {
+            std::vector<std::string> tokens = CStringHelper::split(line, ':');
 
             if (tokens.size() != 2)
                 continue;
 
-            auto key = tokens[0];
-            auto value = tokens[1];
-
-            if (key == "MemTotal") {
-                CStringHelper::toNumber(value, systemMemory.memoryTotal);
+            if (tokens[0] == "MemTotal") {
+                CStringHelper::toNumber(tokens[1], systemMemory.memoryTotal);
             }
         }
 
         return true;
     }
 
-    static bool getFileMemoryBase(pid_t pid, const std::string &file, CProcessMap &processMap) {
+    static bool getImageBase(pid_t pid, const std::string &pathname, CProcessMap &processMap) {
         std::list<CProcessMap> processMaps;
 
         if (!getProcessMaps(pid, processMaps))
             return false;
 
         auto it = std::find_if(processMaps.begin(), processMaps.end(), [=](const auto &m) {
-            return CStringHelper::findStringIC(m.file, file);
+            return CStringHelper::findStringIC(m.pathname, pathname);
         });
 
         if (it == processMaps.end())
@@ -216,39 +210,39 @@ public:
     }
 
     static bool getProcessMaps(pid_t pid, std::list<CProcessMap> &processMaps) {
-        std::string mapsPath = CPath::join("/proc", std::to_string(pid), "maps");
-        std::ifstream infile(mapsPath);
+        std::string path = CPath::join("/proc", std::to_string(pid), "maps");
+        std::ifstream stream(path);
 
-        if (!infile.is_open())
+        if (!stream.is_open())
             return false;
 
         std::string line;
 
-        while (std::getline(infile, line)) {
+        while (std::getline(stream, line)) {
             CStringHelper::trimExtraSpace(line);
 
-            auto tokens = CStringHelper::split(line, ' ');
+            std::vector<std::string> tokens = CStringHelper::split(line, ' ');
 
-            if (tokens.size() < 5)
+            if (tokens.size() < PROCESS_MAP_FIELDS)
                 continue;
 
             CProcessMap processMap = {};
 
-            auto vm = CStringHelper::split(tokens[0], '-');
+            std::vector<std::string> address = CStringHelper::split(tokens[0], '-');
 
-            if (vm.size() != 2)
+            if (address.size() != 2)
                 continue;
 
-            CStringHelper::toNumber(vm[0], processMap.start, 16);
-            CStringHelper::toNumber(vm[1], processMap.end, 16);
+            CStringHelper::toNumber(address[0], processMap.start, 16);
+            CStringHelper::toNumber(address[1], processMap.end, 16);
 
-            processMap.flags = tokens[1];
-            CStringHelper::toNumber(tokens[2], processMap.pageOff, 16);
-            processMap.dev = tokens[3];
+            processMap.permission = tokens[1];
+            CStringHelper::toNumber(tokens[2], processMap.offset, 16);
+            processMap.device = tokens[3];
             CStringHelper::toNumber(tokens[4], processMap.inode);
 
             if (tokens.size() == 6)
-                processMap.file = tokens[5];
+                processMap.pathname = tokens[5];
 
             processMaps.push_back(processMap);
         }

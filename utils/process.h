@@ -55,7 +55,7 @@ struct CSystemMemory {
 struct CProcessMap {
     unsigned long start;
     unsigned long end;
-    std::string permission;
+    std::string permissions;
     unsigned long offset;
     std::string device;
     unsigned long inode;
@@ -236,7 +236,7 @@ public:
             CStringHelper::toNumber(address[0], processMap.start, 16);
             CStringHelper::toNumber(address[1], processMap.end, 16);
 
-            processMap.permission = tokens[1];
+            processMap.permissions = tokens[1];
             CStringHelper::toNumber(tokens[2], processMap.offset, 16);
             processMap.device = tokens[3];
             CStringHelper::toNumber(tokens[4], processMap.inode);
